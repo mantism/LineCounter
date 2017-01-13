@@ -1,6 +1,7 @@
 package com.mantism.storage;
 
 import java.io.File;
+import java.util.HashMap;
 
 import com.sleepycat.je.DatabaseException;
 import com.sleepycat.je.Environment;
@@ -13,6 +14,7 @@ public class DBWrapper {
 	private static String envDirectory = null;
 	private static Environment myEnv;
 	private static EntityStore store;
+	private static LangAccessor langDA;
 
 	public DBWrapper(String dir) throws DatabaseException {
 		envDirectory = dir;
@@ -24,6 +26,7 @@ public class DBWrapper {
 		File envHome = new File(envDirectory);
 		openEnv(envHome);
 		openStore(myEnv);
+		langDA = new LangAccessor(store);
 
 	}
 
@@ -88,5 +91,56 @@ public class DBWrapper {
 	public void shutdown() {
 		closeStore();
 		closeEnv();
+	}
+	
+	/*
+	 * Creates new LanguageEntity and adds it to
+	 * the pIdx of langDA
+	 */
+	public boolean addLang(String language) {
+		if (language == null) return false;
+		
+		LanguageEntity lang = new LanguageEntity();
+		if (langDA.pIdx.contains(language)) {
+			return false;
+		}
+		lang.setLanguage(language);
+		lang.resetCount();
+		langDA.pIdx.putNoReturn(lang);
+		return true;
+	}
+	
+	/*
+	 * Updates count for specified language
+	 */
+	public boolean updateCount(String language, int count) {
+		
+		if (language == null || count < 0) {
+			return false;
+		}
+		
+		if (!langDA.pIdx.contains(language)) {
+			addLang(language);
+		}
+		LanguageEntity lang = langDA.pIdx.get(language);
+		lang.updateCount(count);
+		langDA.pIdx.put(lang);
+		return true;
+		
+	}
+	
+	/*
+	 * Returns the total line counts for all the languages in the database
+	 */
+	public HashMap<String, Integer> getAllCounts() {
+		HashMap<String, Integer> counts = new HashMap<String, Integer>();
+		EntityCursor<LanguageEntity> languages = langDA.pIdx.entities();
+		for (LanguageEntity l = languages.first(); l != null; 
+				l = languages.next()) {
+			String name = l.getLanguage();
+			int count = l.getCount();
+			counts.put(name, count);
+		}
+		return counts;
 	}
 }

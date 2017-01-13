@@ -6,6 +6,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedList;
 
 import org.apache.commons.io.FilenameUtils;
@@ -50,13 +51,16 @@ public class LineCount {
 				curr = fileQueue.removeFirst();
 				try {
 					int numLines = countLines(new File(curr));
-					System.out.println(curr + " " + numLines);
+					String language = FilenameUtils.getExtension(curr);
+					db.updateCount(language, numLines);
+					System.out.println(language + " " + curr + " " + numLines);
 				} catch (FileNotFoundException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 				
 			}
+			printCounts(db);
 		} else {
 			throw new RuntimeException("Did not successfully queue files");
 		}
@@ -141,14 +145,30 @@ public class LineCount {
 		String line;
 		try {
 			while ((line = br.readLine()) != null) {
-				count++;
-			}
+				if (line.startsWith("//") || line.startsWith("/*") 
+						|| line.startsWith("*") || line.startsWith("*/")) {
+					continue;
+				} else {
+					count++;
+				}
+			} 
 			return count;
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return 0;
+	}
+	
+	/*
+	 * Prints all the languages and their respective counts from the bdbstore
+	 */
+	public static void printCounts(DBWrapper db) {
+		HashMap<String, Integer> counts = db.getAllCounts();
+		
+		for (String s : counts.keySet()) {
+			System.out.println(s + " : " + counts.get(s));
+		}
 	}
 }
 

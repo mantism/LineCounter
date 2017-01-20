@@ -64,7 +64,7 @@ public class LineCount {
 				try {
 					int numLines = countLines(new File(curr));
 					String language = FilenameUtils.getExtension(curr);
-					//db.updateCount(language, numLines);
+					db.updateCount(language, numLines);
 					System.out.println(language + " " + curr + " " + numLines);
 				} catch (FileNotFoundException e) {
 					// TODO Auto-generated catch block
@@ -162,7 +162,6 @@ public class LineCount {
 					continue;
 				} else if (line.startsWith("(*")){
 					while (!(line.contains("*)"))) {
-						System.out.println(line);
 						line = br.readLine();
 					}
 				} else if (line.isEmpty()){

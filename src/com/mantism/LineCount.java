@@ -19,6 +19,8 @@ public class LineCount {
 	 * Takes in two arguments, filepath or directory path and bdb path
 	 */
 	public static void main(String[] args) {
+		
+		
 		if (args.length < 2) {
 			throw new RuntimeException("Invalid number of arguments: Please provide"
 					+ " paths for the file or directory for which you wish to"
@@ -40,6 +42,16 @@ public class LineCount {
 		}
 		
 		DBWrapper db = new DBWrapper(dbPath);
+		
+		/*
+		 * if the first command line argument is print, will print out all the 
+		 * languages and their line counts
+		 */
+		if (args[0].equals("print"))  {
+			printCounts(db);
+			return;
+		}
+		
 		//queues up the files based off of the inputs
 		if (enqueueFiles(filePath, forbidden)) {
 			String curr;
@@ -52,7 +64,7 @@ public class LineCount {
 				try {
 					int numLines = countLines(new File(curr));
 					String language = FilenameUtils.getExtension(curr);
-					db.updateCount(language, numLines);
+					//db.updateCount(language, numLines);
 					System.out.println(language + " " + curr + " " + numLines);
 				} catch (FileNotFoundException e) {
 					// TODO Auto-generated catch block
@@ -79,7 +91,7 @@ public class LineCount {
 				if (extension.equals("java") || extension.equals("cpp") || 
 						extension.equals("js") || extension.equals("html") ||
 						extension.equals("css") || extension.equals("c") ||
-						extension.equals("tex") || extension.equals("sql")) {
+						extension.equals("tex") || extension.equals("sql") || extension.equals("ml")) {
 					
 						fileQueue.add(path);
 				}
@@ -148,15 +160,22 @@ public class LineCount {
 				if (line.startsWith("//") || line.startsWith("/*") 
 						|| line.startsWith("*") || line.startsWith("*/")) {
 					continue;
-				} else {
+				} else if (line.startsWith("(*")){
+					while (!(line.contains("*)"))) {
+						System.out.println(line);
+						line = br.readLine();
+					}
+				} else if (line.isEmpty()){
 					count++;
 				}
 			} 
+			br.close();
 			return count;
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		
 		return 0;
 	}
 	
